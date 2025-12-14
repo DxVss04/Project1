@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hệ Thống Cứu Trợ</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 20px;
+        background: #f0f2f5;
+      }
+      .header {
+        text-align: center;
+        margin-bottom: 20px;
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+      .nav-btn {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        margin-bottom: 20px;
+      }
+      button {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        background: #007bff;
+        color: white;
+        transition: 0.2s;
+      }
+      button:hover {
+        opacity: 0.9;
+      }
+      .search-area {
+        text-align: center;
+        display: none;
+        margin-bottom: 20px;
+      }
+      .search-area input {
+        padding: 10px;
+        width: 300px;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+      }
+      .filter-area {
+        text-align: center;
+        display: none;
+        margin-bottom: 20px;
+        gap: 10px;
+        justify-content: center;
+      }
+
+      .grid {
+        display: grid;
+        gap: 15px;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      }
+      .card {
+        background: white;
+        padding: 15px;
+        border-radius: 8px;
+        border-left: 5px solid #ddd;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+      }
+      .card.supported {
+        border-left-color: #28a745;
+      }
+      .card.unsupported {
+        border-left-color: #dc3545;
+      }
+      .status-badge {
+        display: inline-block;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+        margin-top: 5px;
+        cursor: pointer;
+        color: white;
+      }
+      .bg-green {
+        background: #28a745;
+      }
+      .bg-red {
+        background: #dc3545;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <h1>Quản Lý Cứu Trợ Lũ Lụt</h1>
+      <div id="stats">Đang tải dữ liệu...</div>
+    </div>
+
+    <div class="nav-btn">
+      <button onclick="switchMode('search')">🔍 Tìm Kiếm</button>
+      <button onclick="switchMode('list')">📋 Danh Sách</button>
+    </div>
+
+    <div id="searchBox" class="search-area">
+      <input
+        type="text"
+        id="inpSearch"
+        placeholder="Nhập tên (VD: Nguyen Van An)..."
+      />
+      <button onclick="doSearch()">Tìm</button>
+    </div>
+
+    <div id="filterBox" class="filter-area">
+      <button onclick="render(CACHE_DATA)" style="background: #6c757d">
+        Tất cả
+      </button>
+      <button onclick="filterStatus(true)" style="background: #28a745">
+        Đã hỗ trợ
+      </button>
+      <button onclick="filterStatus(false)" style="background: #dc3545">
+        Chưa hỗ trợ
+      </button>
+    </div>
+
+    <div id="results" class="grid"></div>
+
+    <script src="script.js"></script>
+  </body>
+</html>
