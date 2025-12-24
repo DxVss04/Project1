@@ -14,6 +14,7 @@ const loadData = () => {
   if (!fs.existsSync(DATA_PATH)) return [];
   return JSON.parse(fs.readFileSync(DATA_PATH, "utf-8"));
 };
+
 const saveData = (data) =>
   fs.writeFileSync(DATA_PATH, JSON.stringify(data, null, 2));
 
@@ -55,37 +56,45 @@ export const updateStatus = (req, res) => {
     if (index === -1)
       return res.status(404).json({ error: "Không tìm thấy ID" });
 
-    // Cập nhật dữ liệu
     households[index].isSupported = isSupported;
     saveData(households);
 
-    // Re-build tree để cập nhật dữ liệu mới nhất vào bộ nhớ RAM
+    // Re-build tree
     bkTree = new BKTree();
     households.forEach((hh) => bkTree.add(hh));
 
     res.json({ message: "Thành công", data: households[index] });
   } catch (e) {
-    res.status(500).json({ error: "Lỗi ghi file hoặc xử lý dữ liệu" });
+    res.status(500).json({ error: "Lỗi ghi file" });
   }
 };
 
-// API 5: Tìm kiếm theo hoàn cảnh
+// API 5: Tìm kiếm theo hoàn cảnh - ✅ SỬA LẠI HOÀN TOÀN
 export const searchBySituation = (req, res) => {
-  const { situation } = req.query;
+  const { situation } = req.query; // ✅ Nhận "situation" từ URL
 
-  const allowedSituations = ["nghèo", "cận nghèo", "bình thường"];
-
-  if (!situation)
-    return res.status(400).json({ error: "Thiếu query 'situation'" });
-
-  if (!allowedSituations.includes(situation.toLowerCase()))
-    return res.status(400).json({ error: "Hoàn cảnh không hợp lệ" });
+  console.log("=== DEBUG searchBySituation ===");
+  console.log("Nhận tham số situation:", situation);
 
   try {
     const households = loadData();
-    const results = households.filter(
-      (h) => h.situation.toLowerCase() === situation.toLowerCase()
-    );
+
+    if (!situation) {
+      return res.status(400).json({ error: "Thiếu tham số situation" });
+    }
+
+    // ✅ So sánh với h.status trong data
+    const results = households.filter((h) => {
+      if (!h.status) return false;
+      const match =
+        h.status.trim().toLowerCase() === situation.trim().toLowerCase();
+      console.log(
+        `${h.name}: status="${h.status}" vs situation="${situation}" => ${match}`
+      );
+      return match;
+    });
+
+    console.log(`Tìm thấy ${results.length} kết quả`);
 
     res.json({
       query: situation,
@@ -93,6 +102,45 @@ export const searchBySituation = (req, res) => {
       results,
     });
   } catch (e) {
+    console.error("Lỗi:", e);
+    res.status(500).json({ error: e.message });
+  }
+};
+
+// API 6: Tìm kiếm thành viên
+export const searchByMember = (req, res) => {
+  const { minAge, maxAge, gender } = req.query;
+
+  console.log("=== DEBUG searchByMember ===");
+  console.log("Params:", { minAge, maxAge, gender });
+
+  try {
+    const households = loadData();
+
+    const results = households.filter((h) => {
+      if (!h.members || !Array.isArray(h.members)) return false;
+
+      return h.members.some((m) => {
+        let match = true;
+
+        if (minAge) match = match && m.age >= Number(minAge);
+        if (maxAge) match = match && m.age <= Number(maxAge);
+
+        if (gender)
+          match =
+            match &&
+            m.gender &&
+            m.gender.toLowerCase() === gender.toLowerCase();
+
+        return match;
+      });
+    });
+
+    console.log(`Tìm thấy ${results.length} hộ`);
+
+    res.json({ count: results.length, results });
+  } catch (e) {
+    console.error("Lỗi:", e);
     res.status(500).json({ error: e.message });
   }
 };

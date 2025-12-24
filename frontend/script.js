@@ -1,21 +1,25 @@
 const API_URL = "http://localhost:3000/api";
-let CACHE_DATA = []; // Lưu dữ liệu tạm để lọc nhanh
+let CACHE_DATA = [];
 
-// Khởi chạy khi mở trang
 window.onload = async () => {
   try {
-    await fetch(`${API_URL}/init`); // Báo backend nạp cây BK-Tree
+    await fetch(`${API_URL}/init`);
     await loadAllData();
   } catch (err) {
     alert("Không kết nối được Server Backend!");
+    console.error(err);
   }
 };
 
-// Hàm lấy tất cả dữ liệu
 async function loadAllData() {
-  const res = await fetch(`${API_URL}/all`);
-  CACHE_DATA = await res.json();
-  updateStats();
+  try {
+    const res = await fetch(`${API_URL}/all`);
+    CACHE_DATA = await res.json();
+    render(CACHE_DATA);
+    updateStats();
+  } catch (err) {
+    console.error("Lỗi tải dữ liệu:", err);
+  }
 }
 
 function updateStats() {
@@ -28,78 +32,113 @@ function updateStats() {
   }</b>`;
 }
 
-// Chuyển đổi chế độ xem
 function switchMode(mode) {
   document.getElementById("searchBox").style.display =
-    mode === "search" ? "block" : "none";
+    mode === "search" ? "flex" : "none";
   document.getElementById("filterBox").style.display =
     mode === "list" ? "flex" : "none";
-  document.getElementById("results").innerHTML = "";
+
   if (mode === "list") render(CACHE_DATA);
+  else document.getElementById("results").innerHTML = "";
 }
 
-// Tìm kiếm
 async function doSearch() {
-  const query = document.getElementById("inpSearch").value;
+  const query = document.getElementById("inpSearch").value.trim();
   if (!query) return alert("Vui lòng nhập tên!");
-
-  const res = await fetch(`${API_URL}/search?query=${query}`);
-  const data = await res.json();
-  render(data);
+  try {
+    const res = await fetch(
+      `${API_URL}/search?query=${encodeURIComponent(query)}`
+    );
+    const data = await res.json();
+    render(data);
+  } catch (err) {
+    console.error("Lỗi tìm kiếm:", err);
+    alert("Lỗi kết nối Server!");
+  }
 }
 
-// Lọc trạng thái (ở chế độ danh sách)
 function filterStatus(status) {
   const filtered = CACHE_DATA.filter((x) => x.isSupported === status);
   render(filtered);
 }
 
-// Cập nhật trạng thái (Ghi xuống server)
 async function toggleStatus(id, currentStatus) {
   if (!confirm("Xác nhận đổi trạng thái?")) return;
+  try {
+    const res = await fetch(`${API_URL}/update`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, isSupported: !currentStatus }),
+    });
 
-  const res = await fetch(`${API_URL}/update`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ id, isSupported: !currentStatus }),
-  });
-
-  if (res.ok) {
-    await loadAllData(); // Tải lại dữ liệu mới nhất
-    // Nếu đang ở màn hình search thì search lại để cập nhật view
-    if (document.getElementById("searchBox").style.display === "block")
-      doSearch();
-    else render(CACHE_DATA); // Nếu ở list thì render lại list
-  } else {
-    alert("Lỗi cập nhật!");
+    if (res.ok) {
+      await loadAllData();
+    } else {
+      alert("Lỗi cập nhật!");
+    }
+  } catch (err) {
+    console.error("Lỗi cập nhật:", err);
+    alert("Lỗi kết nối Server!");
   }
 }
 
-// Hàm vẽ giao diện
 function render(list) {
   const container = document.getElementById("results");
   container.innerHTML = "";
 
-  if (list.length === 0) {
+  if (!list || list.length === 0) {
     container.innerHTML =
-      '<p style="text-align:center; width:100%">Không có dữ liệu.</p>';
+      '<p style="text-align:center; width:100%; padding:40px; background:white; border-radius:8px;">Không có dữ liệu.</p>';
     return;
   }
 
   list.forEach((hh) => {
     const div = document.createElement("div");
     div.className = `card ${hh.isSupported ? "supported" : "unsupported"}`;
+
+    const memberCount = Array.isArray(hh.members)
+      ? hh.members.length
+      : hh.members;
+
     div.innerHTML = `
-            <h3>${hh.name}</h3>
-            <p>🏠 ${hh.address}</p>
-            <p>👨‍👩‍👧‍👦 ${hh.members} thành viên - ${hh.status}</p>
-            <span class="status-badge ${
-              hh.isSupported ? "bg-green" : "bg-red"
-            }" 
-                  onclick="toggleStatus('${hh.id}', ${hh.isSupported})">
-                ${hh.isSupported ? "Đã Nhận Hỗ Trợ" : "Chưa Nhận Hỗ Trợ"}
-            </span>
-        `;
+      <h3>${hh.name}</h3>
+      <p>🏠 ${hh.address}</p>
+      <p>👨‍👩‍👧‍👦 <b>${memberCount}</b> thành viên - ${hh.status || hh.situation}</p>
+      <span class="status-badge ${hh.isSupported ? "bg-green" : "bg-red"}" 
+            onclick="toggleStatus('${hh.id}', ${hh.isSupported})">
+        ${hh.isSupported ? "✓ Đã Nhận Hỗ Trợ" : "✗ Chưa Nhận Hỗ Trợ"}
+      </span>
+    `;
     container.appendChild(div);
   });
 }
+
+const searchBySituation = async () => {
+  const situation = document.getElementById("situationSelect").value;
+  try {
+    const res = await fetch(
+      `${API_URL}/search-by-situation?situation=${encodeURIComponent(
+        situation
+      )}`
+    );
+    const data = await res.json();
+    render(data.results);
+  } catch (e) {
+    console.error(e);
+    alert("Lỗi kết nối Server!");
+  }
+};
+
+const searchMilitary = async () => {
+  try {
+    const res = await fetch(
+      `${API_URL}/search-member?minAge=18&maxAge=27&gender=Nam`
+    );
+    const data = await res.json();
+    render(data.results);
+    alert(`Tìm thấy ${data.count} hộ có công dân trong độ tuổi NVQS!`);
+  } catch (e) {
+    console.error(e);
+    alert("Lỗi kết nối Server!");
+  }
+};
