@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Hệ Thống Cứu Trợ</title>
+    <title>Test Project 1</title>
     <style>
       body {
         font-family: sans-serif;
@@ -70,10 +70,10 @@
         box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
       }
       .card.supported {
-        border-left-color: #28a745;
+        border-left-color: #76725b;
       }
       .card.unsupported {
-        border-left-color: #dc3545;
+        border-left-color: #76725b;
       }
       .status-badge {
         display: inline-block;
@@ -85,16 +85,16 @@
         color: white;
       }
       .bg-green {
-        background: #28a745;
+        background: #eb6b39;
       }
       .bg-red {
-        background: #dc3545;
+        background: #4b66cf;
       }
     </style>
   </head>
   <body>
     <div class="header">
-      <h1>Quản Lý Cứu Trợ Lũ Lụt</h1>
+      <h1>Demo</h1>
       <div id="stats">Đang tải dữ liệu...</div>
     </div>
 
@@ -104,11 +104,7 @@
     </div>
 
     <div id="searchBox" class="search-area">
-      <input
-        type="text"
-        id="inpSearch"
-        placeholder="Nhập tên (VD: Nguyen Van An)..."
-      />
+      <input type="text" id="inpSearch" placeholder="Nhập tên" />
       <button onclick="doSearch()">Tìm</button>
     </div>
 
@@ -116,10 +112,10 @@
       <button onclick="render(CACHE_DATA)" style="background: #6c757d">
         Tất cả
       </button>
-      <button onclick="filterStatus(true)" style="background: #28a745">
+      <button onclick="filterStatus(true)" style="background: #a09f9c">
         Đã hỗ trợ
       </button>
-      <button onclick="filterStatus(false)" style="background: #dc3545">
+      <button onclick="filterStatus(false)" style="background: #a09f9c">
         Chưa hỗ trợ
       </button>
     </div>

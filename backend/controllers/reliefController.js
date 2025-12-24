@@ -29,7 +29,7 @@ export const initData = (req, res) => {
   }
 };
 
-// API 2: Tìm kiếm
+// API 2: Tìm kiếm tên (Fuzzy Search)
 export const searchHousehold = (req, res) => {
   const { query } = req.query;
   if (!query) return res.status(400).json({ error: "Thiếu query" });
@@ -55,15 +55,44 @@ export const updateStatus = (req, res) => {
     if (index === -1)
       return res.status(404).json({ error: "Không tìm thấy ID" });
 
+    // Cập nhật dữ liệu
     households[index].isSupported = isSupported;
     saveData(households);
 
-    // Re-build tree
+    // Re-build tree để cập nhật dữ liệu mới nhất vào bộ nhớ RAM
     bkTree = new BKTree();
     households.forEach((hh) => bkTree.add(hh));
 
     res.json({ message: "Thành công", data: households[index] });
   } catch (e) {
-    res.status(500).json({ error: "Lỗi ghi file" });
+    res.status(500).json({ error: "Lỗi ghi file hoặc xử lý dữ liệu" });
+  }
+};
+
+// API 5: Tìm kiếm theo hoàn cảnh
+export const searchBySituation = (req, res) => {
+  const { situation } = req.query;
+
+  const allowedSituations = ["nghèo", "cận nghèo", "bình thường"];
+
+  if (!situation)
+    return res.status(400).json({ error: "Thiếu query 'situation'" });
+
+  if (!allowedSituations.includes(situation.toLowerCase()))
+    return res.status(400).json({ error: "Hoàn cảnh không hợp lệ" });
+
+  try {
+    const households = loadData();
+    const results = households.filter(
+      (h) => h.situation.toLowerCase() === situation.toLowerCase()
+    );
+
+    res.json({
+      query: situation,
+      count: results.length,
+      results,
+    });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
   }
 };
